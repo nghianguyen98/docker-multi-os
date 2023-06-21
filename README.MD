@@ -2,7 +2,7 @@
 
 ### Install docker engine,docker-compose :
 ```
-git clone https://github.com/andromeda9096/dockerubuntu.git && cd ./dockerubuntu && chmod +x ./install_docker.sh && ./install_docker.sh -y
+git clone https://github.com/nghianguyen98/docker-multi-os.git && cd ./dockerubuntu && chmod +x ./install_docker.sh && ./install_docker.sh -y
 ```
 
 ### Install New Portainer :
