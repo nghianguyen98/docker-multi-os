@@ -279,13 +279,17 @@ DOCKER=(docker)
 [[ -n "$SUDO" ]] && DOCKER=("$SUDO" docker)
 
 if (( HAS_SYSTEMD )); then
-  info "$("${DOCKER[@]}" --version)"
-  if (( INSTALL_COMPOSE )); then info "$("${DOCKER[@]}" compose version)"; fi
   "${DOCKER[@]}" run --rm hello-world >/dev/null && info "hello-world test passed."
 else
-  info "$(docker --version) (daemon not started - no systemd)"
+  warn "Daemon not started (no systemd) - skipped hello-world test."
 fi
 
-[[ -n "$TARGET_USER" && "$TARGET_USER" != "root" ]] && \
+if [[ -n "$TARGET_USER" && "$TARGET_USER" != "root" ]]; then
   warn "Log out and back in (or run 'newgrp docker') so '${TARGET_USER}' can use docker without sudo."
-info "Done."
+fi
+
+info "Installation complete. Installed versions:"
+docker --version
+if (( INSTALL_COMPOSE )) || docker compose version >/dev/null 2>&1; then
+  docker compose version
+fi
