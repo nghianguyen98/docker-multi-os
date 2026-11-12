@@ -188,7 +188,9 @@ install_rpm() {
   root_run "$pm" remove -y "${old[@]}" || true
 
   info "Adding Docker ${pm} repository"
-  root_run "$pm" install -y curl ca-certificates
+  # curl-minimal (EL9 default) conflicts with the full curl package: only install if missing
+  command -v curl >/dev/null 2>&1 || root_run "$pm" install -y curl
+  root_run "$pm" install -y ca-certificates
   root_run curl -fsSL "${DOCKER_URL}/${REPO_DISTRO}/docker-ce.repo" -o /etc/yum.repos.d/docker-ce.repo
 
   info "Installing: $(IFS=" "; echo "${PACKAGES[*]}")"
