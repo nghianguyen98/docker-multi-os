@@ -1,0 +1,31 @@
+name: CI
+on:
+  push:
+  pull_request:
+
+jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: shellcheck install_docker.sh
+
+  install:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [ubuntu:22.04, ubuntu:24.04, debian:12, rockylinux:9, almalinux:9, fedora:41]
+    container: ${{ matrix.image }}
+    steps:
+      - name: Prepare
+        run: |
+          if command -v apt-get >/dev/null; then apt-get update -y && apt-get install -y git; else (dnf install -y git || yum install -y git); fi
+      - uses: actions/checkout@v4
+      - name: Dry run
+        run: bash install_docker.sh -y --dry-run
+      - name: Real install (no systemd in container)
+        run: |
+          bash install_docker.sh -y
+          docker --version
+          docker compose version
