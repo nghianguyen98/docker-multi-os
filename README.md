@@ -47,6 +47,14 @@ git clone https://github.com/nghianguyen98/docker-multi-os.git && cd docker-mult
 | `--dry-run` | Print every command without executing |
 | `-h`, `--help` | Help |
 
+## Safety on existing servers
+
+- Docker + Compose already installed: prints versions and changes **nothing** (no packages, config, service restart or users).
+- Another runtime found (`docker` without Compose, `podman`, `containerd`, `kubelet`): the script **aborts without changes** unless you pass `--force`.
+- An existing `/etc/docker/daemon.json` is never overwritten.
+- Use `--dry-run` to preview every command first.
+- A fresh install still changes the host network: Docker adds the `docker0` bridge (172.17.0.0/16), enables IP forwarding and iptables/nftables rules. Check for subnet or firewall/VPN conflicts on servers that route traffic.
+
 ## What it does
 
 1. Detects the distro and architecture, refuses unsupported systems.

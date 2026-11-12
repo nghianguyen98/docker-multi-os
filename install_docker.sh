@@ -18,6 +18,7 @@ DRY_RUN=0
 INSTALL_COMPOSE=1
 CONFIGURE_DAEMON=1
 INSTALL_PORTAINER=0
+FORCE=0
 TARGET_USER=""
 SUDO=""
 
@@ -43,6 +44,7 @@ Options:
       --no-compose     Skip docker-buildx / docker-compose plugins
       --no-daemon-conf Do not write /etc/docker/daemon.json (log rotation)
       --portainer      Also deploy Portainer CE (HTTPS on :9443) in /opt/portainer
+      --force          Install even if another container runtime (docker/podman/containerd/kubelet) is present
       --user NAME      Add NAME to the 'docker' group (default: the invoking user)
       --dry-run        Print the commands without executing them
   -h, --help           Show this help
@@ -91,6 +93,7 @@ while (( $# )); do
     --no-daemon-conf) CONFIGURE_DAEMON=0 ;;
     --portainer) INSTALL_PORTAINER=1 ;;
     --user) [[ $# -ge 2 ]] || die "--user needs a value"; TARGET_USER="$2"; shift ;;
+    --force) FORCE=1 ;;
     --dry-run) DRY_RUN=1 ;;
     -h|--help) usage; exit 0 ;;
     *) usage >&2; die "Unknown option: $1" ;;
@@ -138,10 +141,19 @@ info "Detected: ${PRETTY_NAME:-$DISTRO_ID} (${FAMILY}, repo: ${REPO_DISTRO}, arc
 
 if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
   info "Docker + Compose already installed: $(docker --version) / $(docker compose version --short)"
-  info "Nothing to do. Remove them first if you want a clean re-install."
+  info "Existing installation left untouched (no packages, config, service or user changes)."
   ALREADY_INSTALLED=1
+  CONFIGURE_DAEMON=0
+  TARGET_USER=""
 else
   ALREADY_INSTALLED=0
+  EXISTING=()
+  for c in docker podman containerd kubelet; do
+    command -v "$c" >/dev/null 2>&1 && EXISTING+=("$c")
+  done
+  if (( ${#EXISTING[@]} && ! FORCE )); then
+    die "Found existing container runtime/tool: $(IFS=' '; echo "${EXISTING[*]}"). Installing would remove/replace conflicting packages and could stop running containers. Nothing was changed. Re-run with --force if you really want to proceed."
+  fi
   confirm "Install Docker Engine on this server?"
 fi
 
@@ -203,7 +215,7 @@ fi
 
 # ---------------------------------------------------------------- compat
 # Keep the legacy `docker-compose` command working (forwards to the v2 plugin).
-if (( INSTALL_COMPOSE )) && ! command -v docker-compose >/dev/null 2>&1; then
+if (( ! ALREADY_INSTALLED && INSTALL_COMPOSE )) && ! command -v docker-compose >/dev/null 2>&1; then
   info "Creating /usr/local/bin/docker-compose shim -> 'docker compose'"
   write_root_file /usr/local/bin/docker-compose 0755 <<'EOL'
 #!/bin/sh
@@ -229,9 +241,10 @@ elif (( CONFIGURE_DAEMON )); then
   warn "/etc/docker/daemon.json already exists - left untouched."
 fi
 
-if (( HAS_SYSTEMD )); then
+if (( ALREADY_INSTALLED )); then
+  :  # never touch the service of an existing installation
+elif (( HAS_SYSTEMD )); then
   root_run systemctl enable --now docker
-  (( ALREADY_INSTALLED )) || root_run systemctl restart docker
 else
   warn "systemd not detected (container/WSL?) - skipping service enable/start."
 fi
@@ -278,7 +291,9 @@ fi
 DOCKER=(docker)
 [[ -n "$SUDO" ]] && DOCKER=("$SUDO" docker)
 
-if (( HAS_SYSTEMD )); then
+if (( ALREADY_INSTALLED )); then
+  :
+elif (( HAS_SYSTEMD )); then
   "${DOCKER[@]}" run --rm hello-world >/dev/null && info "hello-world test passed."
 else
   warn "Daemon not started (no systemd) - skipped hello-world test."
