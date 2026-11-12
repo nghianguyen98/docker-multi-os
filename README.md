@@ -6,8 +6,8 @@ One-command installer for **Docker Engine + Compose v2** on a fresh Linux server
 |---|---|---|
 | Ubuntu | 24.04 | amd64, arm64 |
 | Debian | 12 | amd64, arm64 |
-| Rocky / AlmaLinux / CentOS Stream / RHEL | 9 | amd64, arm64 |
-| Fedora | 41 | amd64, arm64 |
+| CentOS Stream | 9 | amd64, arm64 |
+| Rocky / AlmaLinux / RHEL / Fedora | same code path as CentOS, not regularly tested | amd64, arm64 |
 
 > macOS is not scripted: install [Docker Desktop](https://www.docker.com/products/docker-desktop/), OrbStack or Colima.
 
@@ -95,7 +95,7 @@ cd /opt/portainer && docker compose pull && docker compose up -d
 shellcheck install_docker.sh
 ```
 
-CI runs ShellCheck and a dry-run on Ubuntu, Debian, Rocky and Fedora containers for every push (`.github/workflows/ci.yml`).
+CI runs ShellCheck and a dry-run on Ubuntu, Debian and CentOS Stream containers for every push (`.github/workflows/ci.yml`).
 
 ## License
 
