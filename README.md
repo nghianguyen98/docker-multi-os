@@ -11,20 +11,28 @@ One-command installer for **Docker Engine + Compose v2** on a fresh Linux server
 
 > macOS is not scripted: install [Docker Desktop](https://www.docker.com/products/docker-desktop/), OrbStack or Colima.
 
-## Quick start
+## Quick start (one line)
+
+SSH into the new server and paste:
 
 ```bash
-git clone https://github.com/nghianguyen98/docker-multi-os.git
-cd docker-multi-os
-sudo ./install_docker.sh -y
+curl -fsSL https://raw.githubusercontent.com/nghianguyen98/docker-multi-os/main/install_docker.sh | sudo bash -s -- -y
 ```
 
-Or without git:
+(Already root? Drop `sudo`. No curl? `wget -qO- <same url> | sudo bash -s -- -y`.)
+
+Done: Docker Engine, `docker compose` and the legacy `docker-compose` command are installed and running. Log out/in once to use docker without `sudo`.
+
+Add Portainer in the same line:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/nghianguyen98/docker-multi-os/main/install_docker.sh -o install_docker.sh
-less install_docker.sh          # always review before running as root
-sudo bash install_docker.sh -y
+curl -fsSL https://raw.githubusercontent.com/nghianguyen98/docker-multi-os/main/install_docker.sh | sudo bash -s -- -y --portainer
+```
+
+Prefer to read the script first, or no internet access to GitHub raw:
+
+```bash
+git clone https://github.com/nghianguyen98/docker-multi-os.git && cd docker-multi-os && sudo ./install_docker.sh -y
 ```
 
 ## Options
@@ -50,7 +58,7 @@ sudo bash install_docker.sh -y
 
 The script is idempotent: if Docker and Compose are already present it exits without changes.
 
-Compose is now a plugin: use `docker compose ...` (with a space). The legacy `docker-compose` binary is not installed.
+Compose is installed as the v2 plugin (`docker compose ...`). A small `docker-compose` wrapper is also created so old commands and scripts keep working.
 
 ## Portainer
 

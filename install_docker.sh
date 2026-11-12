@@ -199,6 +199,16 @@ if (( ! ALREADY_INSTALLED )); then
   "install_${FAMILY}"
 fi
 
+# ---------------------------------------------------------------- compat
+# Keep the legacy `docker-compose` command working (forwards to the v2 plugin).
+if (( INSTALL_COMPOSE )) && ! command -v docker-compose >/dev/null 2>&1; then
+  info "Creating /usr/local/bin/docker-compose shim -> 'docker compose'"
+  write_root_file /usr/local/bin/docker-compose 0755 <<'EOL'
+#!/bin/sh
+exec docker compose "$@"
+EOL
+fi
+
 # ---------------------------------------------------------------- configure
 HAS_SYSTEMD=0
 [[ -d /run/systemd/system ]] && HAS_SYSTEMD=1
